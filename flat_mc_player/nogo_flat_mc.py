@@ -1,3 +1,5 @@
+#!/usr/local/bin/python3
+
 from gtp_connection import GtpConnection
 from board_util import GoBoardUtil, EMPTY, BLACK, WHITE
 from simple_board import SimpleGoBoard

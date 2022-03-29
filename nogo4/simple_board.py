@@ -11,9 +11,11 @@ The board uses a 1-dimensional representation with padding
 
 import numpy as np
 from board_util import GoBoardUtil, BLACK, WHITE, EMPTY, BORDER, \
-                       is_black_white, coord_to_point, where1d, \
-                       MAXSIZE, NULLPOINT
+    is_black_white, coord_to_point, where1d, \
+    MAXSIZE, NULLPOINT
 
+def is_black_white_empty(color):
+    return color == BLACK or color == WHITE or color == EMPTY
 class SimpleGoBoard(object):
 
     def get_color(self, point):
@@ -36,6 +38,26 @@ class SimpleGoBoard(object):
         assert 2 <= size <= MAXSIZE
         self.reset(size)
 
+
+
+    def connected_component(self, point):
+        """
+        Find the connected component of the given point.
+        """
+        marker = np.full(self.maxpoint, False, dtype=bool)
+        pointstack = [point]
+        color = self.get_color(point)
+        assert is_black_white_empty(color)
+        marker[point] = True
+        while pointstack:
+            p = pointstack.pop()
+            neighbors = self.neighbors_of_color(p, color)
+            for nb in neighbors:
+                if not marker[nb]:
+                    marker[nb] = True
+                    pointstack.append(nb)
+        return marker
+
     def reset(self, size):
         """
         Creates a start state, an empty board with the given size
@@ -47,8 +69,8 @@ class SimpleGoBoard(object):
         self.WE = 1
         self.current_player = BLACK
         self.maxpoint = size * size + 3 * (size + 1)
-        self.board = np.full(self.maxpoint, BORDER, dtype = np.int32)
-        self.liberty_of = np.full(self.maxpoint, NULLPOINT, dtype = np.int32)
+        self.board = np.full(self.maxpoint, BORDER, dtype=np.int32)
+        self.liberty_of = np.full(self.maxpoint, NULLPOINT, dtype=np.int32)
         self._initialize_empty_points(self.board)
         self._initialize_neighbors()
 
@@ -65,7 +87,7 @@ class SimpleGoBoard(object):
         assert row >= 1
         assert row <= self.size
         return row * self.NS + 1
-        
+
     def _initialize_empty_points(self, board):
         """
         Fills points on the board with EMPTY
@@ -75,7 +97,7 @@ class SimpleGoBoard(object):
         """
         for row in range(1, self.size + 1):
             start = self.row_start(row)
-            board[start : start + self.size] = EMPTY
+            board[start: start + self.size] = EMPTY
 
     def _on_board_neighbors(self, point):
         nbs = []
@@ -83,7 +105,7 @@ class SimpleGoBoard(object):
             if self.board[nb] != BORDER:
                 nbs.append(nb)
         return nbs
-            
+
     def _initialize_neighbors(self):
         """
         precompute neighbor array.
@@ -95,7 +117,7 @@ class SimpleGoBoard(object):
                 self.neighbors.append([])
             else:
                 self.neighbors.append(self._on_board_neighbors(point))
-    
+
     def _stone_has_liberty(self, stone):
         lib = self.find_neighbor_of_color(stone, EMPTY)
         return lib != None
@@ -132,7 +154,7 @@ class SimpleGoBoard(object):
         Returns a board of boolean markers which are set for
         all the points in the block 
         """
-        marker = np.full(self.maxpoint, False, dtype = bool)
+        marker = np.full(self.maxpoint, False, dtype=bool)
         pointstack = [stone]
         color = self.get_color(stone)
         assert is_black_white(color)
@@ -149,11 +171,11 @@ class SimpleGoBoard(object):
     def _fast_liberty_check(self, nb_point):
         lib = self.liberty_of[nb_point]
         if lib != NULLPOINT and self.get_color(lib) == EMPTY:
-            return True # quick exit, block has a liberty  
+            return True  # quick exit, block has a liberty
         if self._stone_has_liberty(nb_point):
-            return True # quick exit, no need to look at whole block
+            return True  # quick exit, no need to look at whole block
         return False
-        
+
     def _detect_capture(self, nb_point):
         """
         Check whether opponent block on nb_point is captured.
@@ -163,7 +185,7 @@ class SimpleGoBoard(object):
             return False
         opp_block = self._block_of(nb_point)
         return not self._has_liberty(opp_block)
-    
+
     # def is_legal(self, point, color):
     #     """
     #     Check whether it is legal for color to play on point
@@ -175,7 +197,7 @@ class SimpleGoBoard(object):
     #         legal = board_copy.play_move(point, color)
     #     except:
     #         return False
-            
+
     #     return legal
 
     def is_legal(self, point, color):
@@ -185,26 +207,26 @@ class SimpleGoBoard(object):
         assert is_black_white(color)
         # Special cases
         if self.board[point] != EMPTY:
-            return False 
-        
+            return False
+
         # General case: deal with captures, suicide
         opp_color = GoBoardUtil.opponent(color)
         self.board[point] = color
         neighbors = self.neighbors[point]
-        # Captur 
+        # Captur
         for nb in neighbors:
             if self.board[nb] == opp_color:
                 if self._detect_capture(nb):
                     self.board[point] = EMPTY
-                    return False 
+                    return False
         # Sucide
         if not self._stone_has_liberty(point):
             # check suicide of whole block
             block = self._block_of(point)
-            if not self._has_liberty(block): # undo suicide move
+            if not self._has_liberty(block):  # undo suicide move
                 self.board[point] = EMPTY
-                return False 
-        # Undo 
+                return False
+        # Undo
         self.board[point] = EMPTY
         return True
 
@@ -217,7 +239,7 @@ class SimpleGoBoard(object):
         # Special cases
         if self.board[point] != EMPTY:
             raise ValueError("occupied")
-            
+
         # General case: deal with captures, suicide
         opp_color = GoBoardUtil.opponent(color)
         self.board[point] = color
@@ -230,7 +252,7 @@ class SimpleGoBoard(object):
         if not self._stone_has_liberty(point):
             # check suicide of whole block
             block = self._block_of(point)
-            if not self._has_liberty(block): # undo suicide move
+            if not self._has_liberty(block):  # undo suicide move
                 self.board[point] = EMPTY
                 raise ValueError("suicide")
         self.current_player = GoBoardUtil.opponent(color)
@@ -243,14 +265,14 @@ class SimpleGoBoard(object):
             if self.get_color(nb) == color:
                 nbc.append(nb)
         return nbc
-        
+
     def find_neighbor_of_color(self, point, color):
         """ Return one neighbor of point of given color, or None """
         for nb in self.neighbors[point]:
             if self.get_color(nb) == color:
                 return nb
         return None
-        
+
     def _neighbors(self, point):
         """ List of all four neighbors of the point """
         return [point - 1, point + 1, point - self.NS, point + self.NS]

@@ -1,6 +1,6 @@
 import pexpect
 
-player1='flat_mc_player/nogo_flat_mc.py'
+player1='nogo4/nogo4.py'
 player2='random_player/nogo_random.py' 
 
 win1=0
@@ -41,6 +41,7 @@ def playSingleGame(alternative=False):
     while 1:
         if sw==0:
             move=getMove(p1,'b')
+            print("Black's move: ",move)
             assert(move!='pass')
             if move=='resign':
                 result=2
@@ -53,6 +54,7 @@ def playSingleGame(alternative=False):
             playMove(ob,'b',move)
         else:
             move=getMove(p2,'w')
+            print("White's move: ",move)
             assert(move!='pass')
             if move=='resign':
                 result=1
@@ -84,7 +86,7 @@ def playSingleGame(alternative=False):
     print(winner, istimeout)
     return result,istimeout
 
-def playGames(numGame=1):
+def playGames(numGame=20):
     global win1,win2,numTimeout
     for i in range(0,numGame):
         if(i<numGame/2):
