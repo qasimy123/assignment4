@@ -1,29 +1,57 @@
 #!/usr/bin/python3
-
-import os
 import sys
 import numpy as np
 from board_util import GoBoardUtil, BLACK, WHITE, PASS
 from feature_moves import FeatureMoves
 from simple_board import SimpleGoBoard
 from gtp_connection import point_to_coord, format_point
+from collections import defaultdict
 
-def uct_val(node: 'TreeNode', child, exploration, max_flag):
+
+def uct_val(node: 'TreeNode', child: 'TreeNode', exploration, max_flag):
+    # sys.stderr.write("Node values {} {}\n", node._black_wins_as_result, node._n_visits_across)
+    # µi = (1 − β) ˆµi + βµ˜i
+
+    # sys.stderr.write("Node values {} {}\n".format(
+    # node._black_wins_as_result, node._n_visits_across))
     if child._n_visits == 0:
+        # sys.stderr.write("Returning 0\n")
         return float('inf')
     if max_flag:
-        return float(child._black_wins) / child._n_visits + exploration * np.sqrt(
+        # sys.stderr.write("Max\n")
+        mu_squigly = float(child._black_wins_as_result) / \
+            child._n_visits_across
+        # if you can't calculate mu_squiggly use default value
+        mu_hat = float(child._black_wins)/child._n_visits
+        # if you can't calculate mu_hat use default value
+        # sys.stderr.write(
+        #     "mu_squigly {} mu_hat {}\n".format(mu_squigly, mu_hat))
+        Beta = np.sqrt(node.k/(3*node._n_visits+node.k))
+        mu = (1-Beta)*mu_hat + Beta*mu_squigly
+        return mu + exploration * np.sqrt(
             np.log(node._n_visits) / child._n_visits
         )
     else:
-        return float(
-            child._n_visits - child._black_wins
-        ) / child._n_visits + exploration * np.sqrt(
+        # sys.stderr.write("Min\n")
+        mu_squigly = float(child._n_visits_across -
+                           child._black_wins_as_result) / child._n_visits_across
+        mu_hat = float(child._n_visits - child._black_wins)/child._n_visits
+        Beta = np.sqrt(node.k/(3*node._n_visits+node.k))
+        mu = (1-Beta)*mu_hat + Beta*mu_squigly
+        return mu + exploration * np.sqrt(
             np.log(node._n_visits) / child._n_visits
         )
 
 
+# def uct_val(node: 'TreeNode', child: 'TreeNode', exploration, max_flag):
+#     # µi = (1 − β) ˆµi + βµ˜i
+#     if child._n_visits == 0:
+#         return float('inf')
+#     if max_flag:
+
+
 class TreeNode(object):
+    moves_dict = defaultdict(list)
     """
     A node in the MCTS tree.
     """
@@ -37,10 +65,13 @@ class TreeNode(object):
         """
         self._parent = parent
         self._children = {}  # a map from move to TreeNode
-        self._n_visits = 0
-        self._black_wins = 0
-        self._n_winning_trajectories = 0
-        self._black_wins_as_result = 0
+        self._n_visits = 0  # n
+        self._black_wins = 0  # w
+        self._black_wins_as_result = 0  # w with squigly
+        self._n_visits_across = 25  # n with squigly
+        self.mu_hat = 0.5
+        self.mu_squigly = 0.5
+        self.k = 100
         self._expanded = False
         self._move = None
 
@@ -48,12 +79,13 @@ class TreeNode(object):
         """
         Expands tree by creating new children.
         """
-        moves = GoBoardUtil.generate_legal_moves(board,board.current_player)
+        moves = GoBoardUtil.generate_legal_moves(board, board.current_player)
         for move in moves:
             if move not in self._children:
                 # sys.stderr.write("expand: move = {}\n".format(move))
                 self._children[move] = TreeNode(self)
                 self._children[move]._move = move
+                TreeNode.moves_dict[color].append(move)
         self._expanded = True
 
     def select(self, exploration, max_flag):
@@ -65,10 +97,15 @@ class TreeNode(object):
         Returns:
         A tuple of (move, next_node)
         """
-        return max(
+        color = BLACK if max_flag else WHITE
+
+        best = max(
             self._children.items(),
             key=lambda items: uct_val(self, items[1], exploration, max_flag),
         )
+        # sys.stderr.write("select: best = {}\n".format(best))
+        TreeNode.moves_dict[color].append(best[0])
+        return best
 
     def update(self, leaf_value):
         """
@@ -83,7 +120,7 @@ class TreeNode(object):
         self._black_wins += leaf_value
         self._n_visits += 1
 
-    def update_recursive(self, leaf_value):
+    def update_recursive(self, leaf_value, color):
         """
         Like a call to update(), but applied recursively for all ancestors.
 
@@ -92,7 +129,13 @@ class TreeNode(object):
         """
         # If it is not root, this node's parent should be updated first.
         if self._parent:
-            self._parent.update_recursive(leaf_value)
+            for key, value in self._parent._children.items():
+                if key in TreeNode.moves_dict[color]:
+                    value: TreeNode
+                    value._n_visits_across += 1
+                    value._black_wins_as_result += leaf_value
+            self._parent.update_recursive(
+                leaf_value, GoBoardUtil.opponent(color))
         self.update(leaf_value)
 
     def is_leaf(self):
@@ -110,9 +153,9 @@ class MCTS(object):
         self._root = TreeNode(None)
         self.toplay = BLACK
         self.exploration = 0.4
-        self.limit = 50
+        self.limit = 200
         self.komi = 6.5
-        self.num_simulation = 300
+        self.num_simulation = 1000
 
     def _playout(self, board: SimpleGoBoard, color):
         """
@@ -131,35 +174,37 @@ class MCTS(object):
         node = self._root
         # This will be True olny once for the root
         if not node._expanded:
-            sys.stderr.write("expand: node._move = {}\n".format(node._move))
+            # sys.stderr.write("expand: node._move = {}\n".format(node._move))
             node.expand(board, color)
         while not node.is_leaf():
-            sys.stderr.write("node._n_visits = {}\n".format(node._n_visits))
+            # sys.stderr.write("node._n_visits = {}\n".format(node._n_visits))
             # Greedily select next move.
             max_flag = color == BLACK
             move, next_node = node.select(self.exploration, max_flag)
-            sys.stderr.write("move = {}\n".format(move))
+            # sys.stderr.write("move = {}\n".format(move))
             if move != PASS:
-                sys.stderr.write("Testing {}\n".format(board.is_legal(move, color)))
+                # sys.stderr.write("Testing {}\n".format(
+                # board.is_legal(move, color)))
                 if not board.is_legal(move, color):
                     return
                 assert board.is_legal(move, color)
             if move == PASS:
-                sys.stderr.write("No way\n")
+                # sys.stderr.write("No way\n")
                 move = None
             board.play_move(move, color)
+            TreeNode.moves_dict[color].append(move)
             color = GoBoardUtil.opponent(color)
             node = next_node
-        sys.stderr.write("1\n")
+        # sys.stderr.write("1\n")
         assert node.is_leaf()
         if not node._expanded:
-            sys.stderr.write("22\n")
+            # sys.stderr.write("22\n")
             node.expand(board, color)
-        sys.stderr.write("Done\n")
+        # sys.stderr.write("Done\n")
         assert board.current_player == color
         leaf_value = self._evaluate_rollout(board, color)
         # Update value and visit count of nodes in this traversal.
-        node.update_recursive(leaf_value)
+        node.update_recursive(leaf_value, color)
 
     def _evaluate_rollout(self, board: SimpleGoBoard, toplay):
         """
@@ -190,6 +235,7 @@ class MCTS(object):
             # sys.stderr.write("Dumping the subtree! \n")
             # sys.stderr.flush()
             self._root = TreeNode(None)
+            TreeNode.moves_dict.clear()
         self.toplay = toplay
         for n in range(self.num_simulation):
             board_copy = board.copy()
@@ -200,7 +246,7 @@ class MCTS(object):
             (move, node._n_visits) for move, node in self._root._children.items()
         ]
         # sys.stderr.write("moves_ls = {}\n".format(moves_ls))
-        sys.stderr.write("moves_ls = {}\n".format(moves_ls))
+        # sys.stderr.write("moves_ls = {}\n".format(moves_ls))
         if not moves_ls:
             return None
         moves_ls = sorted(moves_ls, key=lambda i: i[1], reverse=True)
@@ -326,9 +372,11 @@ class MCTS(object):
             pointString = self.point_to_string(board.size, move)
             stats.append((pointString, win_rate, wins, visits))
         sys.stderr.write(
-            "Statistics: {} \n".format(sorted(stats, key=lambda i: i[3], reverse=True))
+            "Statistics: {} \n".format(
+                sorted(stats, key=lambda i: i[3], reverse=True))
         )
         sys.stderr.flush()
+
     def update_with_move(self, last_move):
         """
         Step forward in the tree, keeping everything we already know about the subtree, assuming

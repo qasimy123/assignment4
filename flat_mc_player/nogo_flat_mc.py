@@ -31,7 +31,7 @@ class NoGoFlatMC():
         """
         self.name = "NoGoFlatMC"
         self.version = 1.0
-        self.simulations_per_move = 10
+        self.simulations_per_move = 1000
         self.best_move = None
 
     def simulate(self, board, toplay):
