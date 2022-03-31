@@ -112,7 +112,7 @@ class MCTS(object):
         self.exploration = 0.4
         self.limit = 200
         self.komi = 6.5
-        self.num_simulation = 600
+        self.num_simulation = 1000
 
     def _playout(self, board: SimpleGoBoard, color):
         """

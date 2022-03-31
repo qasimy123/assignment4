@@ -19,19 +19,19 @@ class FeatureMoves(object):
         board = board.copy()
         for _ in range(limit):
             color = board.current_player
-            # move = GoBoardUtil.generate_random_move(board, color, False)
-            if use_pattern:
-                move = get_pattern_based_feature_move(board, color)
-                if not move:
-                    move = GoBoardUtil.generate_random_move(
-                        board, color, False)
-            else:
-                move = GoBoardUtil.generate_random_move(board, color, False)
+            move = GoBoardUtil.generate_random_move(board, color, False)
+            # if use_pattern:
+            #     move = get_pattern_based_feature_move(board, color)
+            #     if not move:
+            #         move = GoBoardUtil.generate_random_move(
+            #             board, color, False)
+            # else:
+            #     move = GoBoardUtil.generate_random_move(board, color, False)
 
             if move == PASS:
                 break
             board.play_move(move, color)
 
         w = winner(board)
-        sys.stderr.write("Winner: {}\n".format(w))
+        # sys.stderr.write("Winner: {}\n".format(w))
         return w

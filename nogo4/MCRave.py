@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 import sys
+import time
 import numpy as np
 from board_util import GoBoardUtil, BLACK, WHITE, PASS
 from feature_moves import FeatureMoves
@@ -12,7 +13,7 @@ def uct_val(node: 'TreeNode', child: 'TreeNode', exploration, max_flag):
     if child._n_visits == 0:
         return float('inf') if max_flag else float('-inf')
     mu_squigly = float(child._black_wins_as_result) / \
-        (child._n_visits_across)
+            (child._n_visits_across)
     mu_hat = float(child._black_wins)/(child._n_visits)
     Beta = np.sqrt(node.k/(3*node._n_visits+node.k))
     mu = (1-Beta)*mu_hat + Beta*mu_squigly
@@ -141,6 +142,7 @@ class MCTS(object):
         self.limit = 200
         self.komi = 6.5
         self.num_simulation = 1000
+        self.use_pattern = False
 
     def _playout(self, board: SimpleGoBoard, color):
         """
@@ -201,7 +203,7 @@ class MCTS(object):
             board,
             toplay,
             self.limit,
-            self.komi
+            self.use_pattern,
         )
         if winner == BLACK:
             return 1
@@ -223,11 +225,23 @@ class MCTS(object):
             self._root = TreeNode(None)
             TreeNode.moves_dict.clear()
         self.toplay = toplay
-        for n in range(self.num_simulation):
+        TIME_LIMIT = 27
+        # for n in range(self.num_simulation):
+        #     board_copy = board.copy()
+        #     self._playout(board_copy, toplay)
+        i = 0
+        # Rewrite forloop to use time limit
+        start_time = time.time()
+        curr_time = time.time()
+        while curr_time - start_time < TIME_LIMIT:
             board_copy = board.copy()
             self._playout(board_copy, toplay)
+            curr_time = time.time()
+            i += 1
+        sys.stderr.write("MCTS: {} playouts\n".format(i))
+        
         # choose a move that has the most visit
-        sys.stderr.write("Root children = {}\n".format(self._root._children))
+        # sys.stderr.write("Root children = {}\n".format(self._root._children))
         moves_ls = [
             (move, node._n_visits) for move, node in self._root._children.items()
         ]
@@ -238,7 +252,7 @@ class MCTS(object):
         moves_ls = sorted(moves_ls, key=lambda i: i[1], reverse=True)
         move = moves_ls[0]
         # self.good_print(board,self._root,self.toplay,10)
-        # sys.stderr.write("Moves_ls = {}\n".format(moves_ls))
+        sys.stderr.write("Moves_ls = {}\n".format(moves_ls))
         if move[0] == PASS:
             return None
         assert board.is_legal(move[0], toplay)
