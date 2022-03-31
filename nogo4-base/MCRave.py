@@ -39,7 +39,7 @@ class TreeNode(object):
         self._children = {}  # a map from move to TreeNode
         self._n_visits = 0
         self._black_wins = 0
-        self._n_winning_trajectories = 0
+        self._n_winning_trajectories = 10
         self._black_wins_as_result = 0
         self._expanded = False
         self._move = None
@@ -112,7 +112,7 @@ class MCTS(object):
         self.exploration = 0.4
         self.limit = 200
         self.komi = 6.5
-        self.num_simulation = 1000
+        self.num_simulation = 600
 
     def _playout(self, board: SimpleGoBoard, color):
         """

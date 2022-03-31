@@ -3,6 +3,7 @@ feature_moves.py
 Move generation based on simple features.
 """
 
+# from random import randint, random
 from board_score import winner
 from board_util import GoBoardUtil, PASS
 from patternbasedfeatures import get_pattern_based_feature_move
@@ -11,20 +12,26 @@ from simple_board import SimpleGoBoard
 # import random
 import sys
 
+
 class FeatureMoves(object):
     @staticmethod
-    def playGame(board: SimpleGoBoard, color, limit, komi):
-        # board = board.copy()
-        for i in range(limit):
+    def playGame(board: SimpleGoBoard, color, limit, use_pattern=False):
+        board = board.copy()
+        for _ in range(limit):
             color = board.current_player
-            move = GoBoardUtil.generate_random_move(board, color, False)
-            # sys.stderr.write("Move\n")
-            # move = get_pattern_based_feature_move(board, color)
-            # sys.stderr.write("Move {}".format(move))
+            # move = GoBoardUtil.generate_random_move(board, color, False)
+            if use_pattern:
+                move = get_pattern_based_feature_move(board, color)
+                if not move:
+                    move = GoBoardUtil.generate_random_move(
+                        board, color, False)
+            else:
+                move = GoBoardUtil.generate_random_move(board, color, False)
+
             if move == PASS:
                 break
             board.play_move(move, color)
-        
-        w = winner(board, komi)
-        # sys.stderr.write("Winner: {}\n".format(w))
+
+        w = winner(board)
+        sys.stderr.write("Winner: {}\n".format(w))
         return w

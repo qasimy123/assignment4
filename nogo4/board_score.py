@@ -42,7 +42,7 @@ def score_board(board: SimpleGoBoard, komi):
     return score
 
 
-def winner(board: SimpleGoBoard, komi):
+def winner(board: SimpleGoBoard):
     moves = []
     emptyPoints = board.get_empty_points()
     for p in emptyPoints:

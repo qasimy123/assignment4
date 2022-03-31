@@ -9,45 +9,21 @@ from collections import defaultdict
 
 
 def uct_val(node: 'TreeNode', child: 'TreeNode', exploration, max_flag):
-    # sys.stderr.write("Node values {} {}\n", node._black_wins_as_result, node._n_visits_across)
-    # µi = (1 − β) ˆµi + βµ˜i
-
-    # sys.stderr.write("Node values {} {}\n".format(
-    # node._black_wins_as_result, node._n_visits_across))
     if child._n_visits == 0:
-        # sys.stderr.write("Returning 0\n")
-        return float('inf')
+        return float('inf') if max_flag else float('-inf')
+    mu_squigly = float(child._black_wins_as_result) / \
+        (child._n_visits_across)
+    mu_hat = float(child._black_wins)/(child._n_visits)
+    Beta = np.sqrt(node.k/(3*node._n_visits+node.k))
+    mu = (1-Beta)*mu_hat + Beta*mu_squigly
     if max_flag:
-        # sys.stderr.write("Max\n")
-        mu_squigly = float(child._black_wins_as_result) / \
-            child._n_visits_across
-        # if you can't calculate mu_squiggly use default value
-        mu_hat = float(child._black_wins)/child._n_visits
-        # if you can't calculate mu_hat use default value
-        # sys.stderr.write(
-        #     "mu_squigly {} mu_hat {}\n".format(mu_squigly, mu_hat))
-        Beta = np.sqrt(node.k/(3*node._n_visits+node.k))
-        mu = (1-Beta)*mu_hat + Beta*mu_squigly
         return mu + exploration * np.sqrt(
-            np.log(node._n_visits) / child._n_visits
+            np.log(node._n_visits) / (child._n_visits)
         )
     else:
-        # sys.stderr.write("Min\n")
-        mu_squigly = float(child._n_visits_across -
-                           child._black_wins_as_result) / child._n_visits_across
-        mu_hat = float(child._n_visits - child._black_wins)/child._n_visits
-        Beta = np.sqrt(node.k/(3*node._n_visits+node.k))
-        mu = (1-Beta)*mu_hat + Beta*mu_squigly
-        return mu + exploration * np.sqrt(
-            np.log(node._n_visits) / child._n_visits
+        return mu - exploration * np.sqrt(
+            np.log(node._n_visits) / (child._n_visits)
         )
-
-
-# def uct_val(node: 'TreeNode', child: 'TreeNode', exploration, max_flag):
-#     # µi = (1 − β) ˆµi + βµ˜i
-#     if child._n_visits == 0:
-#         return float('inf')
-#     if max_flag:
 
 
 class TreeNode(object):
@@ -68,7 +44,7 @@ class TreeNode(object):
         self._n_visits = 0  # n
         self._black_wins = 0  # w
         self._black_wins_as_result = 0  # w with squigly
-        self._n_visits_across = 25  # n with squigly
+        self._n_visits_across = 20  # n with squigly
         self.mu_hat = 0.5
         self.mu_squigly = 0.5
         self.k = 100
@@ -98,11 +74,18 @@ class TreeNode(object):
         A tuple of (move, next_node)
         """
         color = BLACK if max_flag else WHITE
-
-        best = max(
-            self._children.items(),
-            key=lambda items: uct_val(self, items[1], exploration, max_flag),
-        )
+        if max_flag:
+            best = max(
+                self._children.items(),
+                key=lambda items: uct_val(
+                    self, items[1], exploration, max_flag),
+            )
+        else:
+            best = min(
+                self._children.items(),
+                key=lambda items: uct_val(
+                    self, items[1], exploration, max_flag),
+            )
         # sys.stderr.write("select: best = {}\n".format(best))
         TreeNode.moves_dict[color].append(best[0])
         return best
@@ -119,6 +102,8 @@ class TreeNode(object):
         # sys.stderr.write("update: leaf_value = {}\n".format(leaf_value))
         self._black_wins += leaf_value
         self._n_visits += 1
+        # self._black_wins_as_result += leaf_value
+        # self._n_visits_across += 1
 
     def update_recursive(self, leaf_value, color):
         """
@@ -130,7 +115,7 @@ class TreeNode(object):
         # If it is not root, this node's parent should be updated first.
         if self._parent:
             for key, value in self._parent._children.items():
-                if key in TreeNode.moves_dict[color]:
+                if key in TreeNode.moves_dict[color] and value!=self:
                     value: TreeNode
                     value._n_visits_across += 1
                     value._black_wins_as_result += leaf_value
@@ -171,6 +156,7 @@ class MCTS(object):
         Returns:
         None
         """
+        TreeNode.moves_dict.clear()
         node = self._root
         # This will be True olny once for the root
         if not node._expanded:
@@ -192,7 +178,7 @@ class MCTS(object):
                 # sys.stderr.write("No way\n")
                 move = None
             board.play_move(move, color)
-            TreeNode.moves_dict[color].append(move)
+            # TreeNode.moves_dict[color].append(move)
             color = GoBoardUtil.opponent(color)
             node = next_node
         # sys.stderr.write("1\n")
@@ -257,125 +243,6 @@ class MCTS(object):
             return None
         assert board.is_legal(move[0], toplay)
         return move[0]
-
-    def point_to_string(self, board_size, point):
-        if point == None or point == PASS:
-            return "Pass"
-        x, y = point_to_coord(point, board_size)
-        return format_point((x, y))
-
-    def int_to_color(self, i):
-        """convert number representing player color to the appropriate character """
-        int_to_color = {BLACK: "b", WHITE: "w"}
-        try:
-            return int_to_color[i]
-        except:
-            raise ValueError("Provided integer value for color is invalid")
-
-    def good_print(self, board: SimpleGoBoard, node, color, num_nodes):
-        cboard = board.copy()
-        sys.stderr.write("\nTaking a tour of selection policy in tree! \n\n")
-        sys.stderr.write(str(GoBoardUtil.get_twoD_board(cboard)))
-        while not node.is_leaf():
-            if node._move != None:
-                pointString = self.point_to_string(board.size, node._move)
-            else:
-                pointString = "Root"
-            sys.stderr.write(
-                "\nMove {}: {} children, {} visits\n".format(
-                    pointString, len(node._children), node._n_visits
-                )
-            )
-            moves_ls = []
-            max_flag = color == BLACK
-            for move, child in node._children.items():
-                uctval = uct_val(node, child, self.exploration, max_flag)
-                moves_ls.append((move, uctval, child))
-            moves_ls = sorted(moves_ls, key=lambda i: i[1], reverse=True)
-
-            if moves_ls:
-                sys.stderr.write(
-                    "\nPrinting {} of {} children with highest UCT value \n\n".format(
-                        num_nodes, pointString
-                    )
-                )
-                sys.stderr.flush()
-                for i in range(num_nodes):
-                    move = moves_ls[i][0]
-                    child_val = moves_ls[i][1]
-                    child_node = moves_ls[i][2]
-                    if move != PASS:
-                        sys.stderr.write(
-                            "\nChild point:{} ;UCT Value {}; Number of visits: {}; Number of Black wins: {}\n".format(
-                                self.point_to_string(cboard.size, move),
-                                child_val,
-                                child_node._n_visits,
-                                child_node._black_wins,
-                            )
-                        )
-                        sys.stderr.flush()
-                    else:
-                        sys.stderr.write(
-                            "\nChild {}: value {}, {} visits, {} Black wins\n"
-                            .format(
-                                move,
-                                child_val,
-                                child_node._n_visits,
-                                child_node._black_wins
-                            )
-                        )
-            # Greedily select next move.
-            max_flag = color == BLACK
-            move, next_node = node.select(self.exploration, max_flag)
-            if move == PASS:
-                move = None
-            assert cboard.is_legal(move, color)
-            pointString = self.point_to_string(cboard.size, move)
-            cboard.play_move(move, color)
-            sys.stderr.write(
-                "\nBoard in simulation after chosing child {} in tree. \n".format(
-                    pointString
-                )
-            )
-            sys.stderr.write(str(GoBoardUtil.get_twoD_board(cboard)))
-            sys.stderr.flush()
-            color = GoBoardUtil.opponent(color)
-            node = next_node
-        assert node.is_leaf()
-        cboard.current_player = color
-        leaf_value = self._evaluate_rollout(cboard, color)
-        sys.stderr.write(
-            "\nWinner of simulation (Black = 0): {}\n".format(leaf_value)
-        )
-        sys.stderr.flush()
-
-    def print_stat(self, board, root, color):
-        s_color = self.int_to_color(color)
-        sys.stderr.write("Number of children: {}\n"
-                         .format(len(root._children)))
-        sys.stderr.write("Number of root visits: {}\n"
-                         .format(root._n_visits))
-        sys.stderr.flush()
-        stats = []
-        for move, node in root._children.items():
-            if color == BLACK:
-                wins = node._black_wins
-            else:
-                wins = node._n_visits - node._black_wins
-            visits = node._n_visits
-            if visits:
-                win_rate = round(float(wins) / visits, 2)
-            else:
-                win_rate = 0
-            if move == PASS:
-                move = None
-            pointString = self.point_to_string(board.size, move)
-            stats.append((pointString, win_rate, wins, visits))
-        sys.stderr.write(
-            "Statistics: {} \n".format(
-                sorted(stats, key=lambda i: i[3], reverse=True))
-        )
-        sys.stderr.flush()
 
     def update_with_move(self, last_move):
         """

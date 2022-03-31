@@ -2,6 +2,7 @@
 # import sys
 from gtp_connection import GtpConnection
 from board_util import GoBoardUtil, EMPTY, BLACK, WHITE
+from patternbasedfeatures import init
 from simple_board import SimpleGoBoard
 
 # import numpy as np
@@ -67,4 +68,5 @@ def run():
 
 
 if __name__ == '__main__':
+    init()
     run()

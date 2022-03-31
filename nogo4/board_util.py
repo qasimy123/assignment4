@@ -130,6 +130,30 @@ class GoBoardUtil(object):
         return legal_moves
 
     @staticmethod
+    def generate_legal_moves_sep_eyes(board, color):
+        """
+        generate a list of all legal moves on the board.
+        Does not include the Pass move.
+
+        Arguments
+        ---------
+        board : np.array
+            a SIZExSIZE array representing the board
+        color : {'b','w'}
+            the color to generate the move for.
+        """
+        moves = board.get_empty_points()
+        legal_moves = []
+        eyes = []
+        for move in moves:
+            if board.is_legal(move, color):
+                if board._is_surrounded(move, color):
+                    eyes.append(move)
+                else:
+                    legal_moves.append(move)
+        return legal_moves, eyes
+
+    @staticmethod
     def generate_random_move(board, color, use_eye_filter):
         """
         Generate a random move.
@@ -142,10 +166,12 @@ class GoBoardUtil(object):
         color : BLACK, WHITE
             the color to generate the move for.
         """
-        moves = GoBoardUtil.generate_legal_moves(board, color)
-        if (len(moves) == 0):
+        moves, eyes = GoBoardUtil.generate_legal_moves_sep_eyes(board, color)
+        if not moves and not eyes:
             return None
-        # choose one legal move randomly
+        if not moves:
+            # sys.stderr.write("No moves left!\n")
+            return random.choice(eyes)
         return random.choice(moves)
 
     @staticmethod

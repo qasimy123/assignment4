@@ -38,6 +38,16 @@ class SimpleGoBoard(object):
         assert 2 <= size <= MAXSIZE
         self.reset(size)
 
+    def _is_surrounded(self, point, color):
+        """
+        check whether empty point is surrounded by stones of color
+        (or BORDER) neighbors
+        """
+        for nb in self._neighbors(point):
+            nb_color = self.board[nb]
+            if nb_color != BORDER and nb_color != color:
+                return False
+        return True
 
 
     def connected_component(self, point):

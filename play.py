@@ -86,7 +86,7 @@ def playSingleGame(alternative=False):
     print(winner, istimeout)
     return result,istimeout
 
-def playGames(numGame=10):
+def playGames(numGame=20):
     global win1,win2,numTimeout
     for i in range(0,numGame):
         if(i<numGame/2):
