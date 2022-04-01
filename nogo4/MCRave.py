@@ -11,20 +11,23 @@ from collections import defaultdict
 
 def uct_val(node: 'TreeNode', child: 'TreeNode', exploration, max_flag):
     if child._n_visits == 0:
-        return float('inf') if max_flag else float('-inf')
-    mu_squigly = float(child._black_wins_as_result) / \
+        return float('inf')
+    
+    if max_flag:
+        mu_squigly = float(child._black_wins_as_result) / \
             (child._n_visits_across)
-    mu_hat = float(child._black_wins)/(child._n_visits)
+        mu_hat = float(child._black_wins)/(child._n_visits)
+        
+    else:
+        mu_squigly = float(child._n_visits_across-20-child._black_wins_as_result) / \
+            (child._n_visits_across)
+        mu_hat = float(child._n_visits-child._black_wins)/(child._n_visits)
+        
     Beta = np.sqrt(node.k/(3*node._n_visits+node.k))
     mu = (1-Beta)*mu_hat + Beta*mu_squigly
-    if max_flag:
-        return mu + exploration * np.sqrt(
-            np.log(node._n_visits) / (child._n_visits)
-        )
-    else:
-        return mu - exploration * np.sqrt(
-            np.log(node._n_visits) / (child._n_visits)
-        )
+    return mu + exploration * np.sqrt(
+        np.log(node._n_visits) / (child._n_visits)
+    )
 
 
 class TreeNode(object):
@@ -75,18 +78,12 @@ class TreeNode(object):
         A tuple of (move, next_node)
         """
         color = BLACK if max_flag else WHITE
-        if max_flag:
-            best = max(
-                self._children.items(),
-                key=lambda items: uct_val(
-                    self, items[1], exploration, max_flag),
-            )
-        else:
-            best = min(
-                self._children.items(),
-                key=lambda items: uct_val(
-                    self, items[1], exploration, max_flag),
-            )
+        best = max(
+            self._children.items(),
+            key=lambda items: uct_val(
+                self, items[1], exploration, max_flag),
+        )
+        
         # sys.stderr.write("select: best = {}\n".format(best))
         TreeNode.moves_dict[color].append(best[0])
         return best
