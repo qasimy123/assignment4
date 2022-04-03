@@ -35,7 +35,7 @@ def uct_val(node: 'TreeNode', child: 'TreeNode', exploration, max_flag):
 
 
 class TreeNode(object):
-    moves_dict = defaultdict(list)
+    moves_dict = defaultdict(set)
     """
     A node in the MCTS tree.
     """
@@ -69,7 +69,7 @@ class TreeNode(object):
                 # sys.stderr.write("expand: move = {}\n".format(move))
                 self._children[move] = TreeNode(self)
                 self._children[move]._move = move
-                TreeNode.moves_dict[color].append(move)
+                TreeNode.moves_dict[color].add(move)
         self._expanded = True
 
     def select(self, exploration, max_flag):
@@ -89,7 +89,7 @@ class TreeNode(object):
         )
         
         # sys.stderr.write("select: best = {}\n".format(best))
-        TreeNode.moves_dict[color].append(best[0])
+        TreeNode.moves_dict[color].add(best[0])
         return best
 
     def update(self, leaf_value):
@@ -159,7 +159,7 @@ class MCTS(object):
         Returns:
         None
         """
-        TreeNode.moves_dict.clear()
+        # TreeNode.moves_dict.clear()
         node = self._root
         # This will be True olny once for the root
         if not node._expanded:
@@ -219,14 +219,19 @@ class MCTS(object):
         """
         Runs all playouts sequentially and returns the most visited move.
         """
-        sys.stderr.write("MCTS: get_move\n")
+        # sys.stderr.write("MCTS: get_move\n")
         if self.toplay != toplay:
             # sys.stderr.write("Dumping the subtree! \n")
             # sys.stderr.flush()
-            self._root = TreeNode(None)
-            TreeNode.moves_dict.clear()
+            if board.last_move not in self._root._children:
+                # sys.stderr.write("No such move!\n")
+                self._root = TreeNode(None)
+                TreeNode.moves_dict.clear()
+            else:
+                # sys.stderr.write("Found the move!\n")
+                self._root = self._root._children[board.last_move]
         self.toplay = toplay
-        TIME_LIMIT = 27
+        TIME_LIMIT = 29
         # for n in range(self.num_simulation):
         #     board_copy = board.copy()
         #     self._playout(board_copy, toplay)
@@ -239,7 +244,7 @@ class MCTS(object):
             self._playout(board_copy, toplay)
             curr_time = time.time()
             i += 1
-        sys.stderr.write("MCTS: {} playouts\n".format(i))
+        # sys.stderr.write("MCTS: {} playouts\n".format(i))
         
         # choose a move that has the most visit
         # sys.stderr.write("Root children = {}\n".format(self._root._children))
@@ -253,7 +258,7 @@ class MCTS(object):
         moves_ls = sorted(moves_ls, key=lambda i: i[1], reverse=True)
         move = moves_ls[0]
         # self.good_print(board,self._root,self.toplay,10)
-        sys.stderr.write("Moves_ls = {}\n".format(moves_ls))
+        # sys.stderr.write("Moves_ls = {}\n".format(moves_ls))
         if move[0] == PASS:
             return None
         assert board.is_legal(move[0], toplay)
