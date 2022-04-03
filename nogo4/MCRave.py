@@ -1,4 +1,8 @@
 #!/usr/bin/python3
+"""
+This function is loosely based on https://github.com/Rochester-NRT/RocAlphaGo/blob/develop/AlphaGo/mcts.py
+Code modified from go5 example available on course website..
+"""
 import sys
 import time
 import numpy as np
