@@ -231,7 +231,7 @@ class MCTS(object):
                 # sys.stderr.write("Found the move!\n")
                 self._root = self._root._children[board.last_move]
         self.toplay = toplay
-        TIME_LIMIT = 30
+        TIME_LIMIT = 29
         # for n in range(self.num_simulation):
         #     board_copy = board.copy()
         #     self._playout(board_copy, toplay)
