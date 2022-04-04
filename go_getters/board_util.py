@@ -4,18 +4,37 @@ Utility functions for Go board.
 """
 
 import numpy as np
+import random
 
 """
 Encoding of colors on and off a Go board.
+FLODDFILL is used internally for a temporary marker
 """
 EMPTY = 0
 BLACK = 1
 WHITE = 2
 BORDER = 3
 
+
 def is_black_white(color):
     return color == BLACK or color == WHITE
-    
+
+
+def is_black_white_empty(color):
+    return color == BLACK or color == WHITE or color == EMPTY
+
+
+"""
+A GO_POINT is a point on a Go board.
+It is encoded as a 32-bit integer, using the numpy type.
+"""
+GO_POINT = np.int32
+
+"""
+Encoding of special pass move
+"""
+PASS = None
+
 """
 Encoding of "not a real point", used as a marker
 """
@@ -23,7 +42,8 @@ NULLPOINT = 0
 
 """
 The largest board we allow. 
-To support larger boards the coordinate printing needs to be changed.
+To support larger boards the coordinate printing in
+GtpConnection.format_point needs to be changed.
 """
 MAXSIZE = 25
 
@@ -32,10 +52,13 @@ where1d: Helper function for using np.where with 1-d arrays.
 The result of np.where is a tuple which contains the indices 
 of elements that fulfill the condition.
 For 1-d arrays, this is a singleton tuple.
-The [0] indexing is needed toextract the result from the singleton tuple.
+The [0] indexing is needed to extract the result from the singleton tuple.
 """
+
+
 def where1d(condition):
     return np.where(condition)[0]
+
 
 def coord_to_point(row, col, boardsize):
     """
@@ -49,13 +72,13 @@ def coord_to_point(row, col, boardsize):
     Returns
     -------
     point
-    
+
     Map (row, col) coordinates to array index
     Below is an example of numbering points on a 3x3 board.
     Spaces are added for illustration to separate board points 
     from BORDER points.
     There is a one point BORDER between consecutive rows (e.g. point 12).
-    
+
     16   17 18 19   20
 
     12   13 14 15
@@ -84,8 +107,8 @@ def coord_to_point(row, col, boardsize):
     NS = boardsize + 1
     return NS * row + col
 
+
 class GoBoardUtil(object):
-    
     @staticmethod
     def generate_legal_moves(board, color):
         """
@@ -106,11 +129,35 @@ class GoBoardUtil(object):
                 legal_moves.append(move)
         return legal_moves
 
-    @staticmethod       
-    def generate_random_move(board, color):
+    @staticmethod
+    def generate_legal_moves_sep_eyes(board, color):
+        """
+        generate a list of all legal moves on the board.
+        Does not include the Pass move.
+
+        Arguments
+        ---------
+        board : np.array
+            a SIZExSIZE array representing the board
+        color : {'b','w'}
+            the color to generate the move for.
+        """
+        moves = board.get_empty_points()
+        legal_moves = []
+        eyes = []
+        for move in moves:
+            if board.is_legal(move, color):
+                if board.is_eye(move, color):
+                    eyes.append(move)
+                else:
+                    legal_moves.append(move)
+        return legal_moves, eyes
+
+    @staticmethod
+    def generate_random_move(board, color, usefilter=False):
         """
         Generate a random move.
-        Return None if no move found
+        Return PASS if no move found
 
         Arguments
         ---------
@@ -121,14 +168,26 @@ class GoBoardUtil(object):
         """
         moves = board.get_empty_points()
         np.random.shuffle(moves)
-        for move in moves:
+        for move in moves: 
             if board.is_legal(move, color):
                 return move
-        return None
+        return PASS
+
+    @staticmethod
+    def generate_random_moves(board, use_eye_filter):
+        """
+        Return a list of random (legal) moves with eye-filtering.
+        """
+
+        color = board.current_player
+        legal_moves = GoBoardUtil.generate_legal_moves(board, color)
+        random.shuffle(legal_moves)
+
+        return legal_moves
 
     @staticmethod
     def opponent(color):
-        return WHITE + BLACK - color    
+        return WHITE + BLACK - color
 
     @staticmethod
     def get_twoD_board(goboard):
@@ -139,8 +198,8 @@ class GoBoardUtil(object):
         Rows 1..size of goboard are copied into rows 0..size - 1 of board2d
         """
         size = goboard.size
-        board2d = np.zeros((size, size), dtype = np.int32)
+        board2d = np.zeros((size, size), dtype=GO_POINT)
         for row in range(size):
             start = goboard.row_start(row + 1)
-            board2d[row, :] = goboard.board[start : start + size]
+            board2d[row, :] = goboard.board[start: start + size]
         return board2d

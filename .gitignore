@@ -3,3 +3,4 @@
 *.html
 go3/**
 .DS_Store
+go5/*
