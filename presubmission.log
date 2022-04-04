@@ -1,0 +1,126 @@
+Script started on 2022-04-03 18:42:44-06:00 [TERM="xterm-256color" TTY="/dev/pts/23" COLUMNS="204" LINES="61"]
+(base) khawaja@ug02:~/cmput455>zsh
+[1m[7m%[27m[1m[0m                                                                                                                                                                                                            ]2;khawaja@ug02:~/cmput455]1;~/cmput455[0m[27m[24m[J(base) [01;32m➜  [36mcmput455[00m [K[?1h=[?2004httrt tar --exclude='__pycache__' --exclude='.git' -czvf assignment4.tgz assignment4[?1l>[?2004l
+]2;tar --exclude='__pycache__' --exclude='.git' -czvf assignment4.tgz assignment]1;tarassignment4/
+assignment4/random_player/
+assignment4/random_player/board_util.py
+assignment4/random_player/board.py
+assignment4/random_player/gtp_connection.py
+assignment4/random_player/nogo_random.py
+assignment4/play.py
+assignment4/.github/
+assignment4/.github/workflows/
+assignment4/.github/workflows/run.yml
+assignment4/.gitignore
+assignment4/readme.txt
+assignment4/go_getters/
+assignment4/go_getters/weights.py
+assignment4/go_getters/simple_board.py
+assignment4/go_getters/MCRave.py
+assignment4/go_getters/gtp_connection.py
+assignment4/go_getters/board_score.py
+assignment4/go_getters/patternbasedfeatures.py
+assignment4/go_getters/feature_moves.py
+assignment4/go_getters/nogo4.py
+assignment4/go_getters/ucb.py
+assignment4/go_getters/simulation_util.py
+assignment4/go_getters/board_util.py
+assignment4/ucb_player/
+assignment4/ucb_player/board_util.py
+assignment4/ucb_player/nogo_ucb.py
+assignment4/ucb_player/board.py
+assignment4/ucb_player/gtp_connection.py
+[1m[7m%[27m[1m[0m                                                                                                                                                                                                            ]2;khawaja@ug02:~/cmput455]1;~/cmput455[0m[27m[24m[J(base) [01;32m➜  [36mcmput455[00m [K[?1h=[?2004hmmv assignment4.tgz test-a4[?1l>[?2004l
+]2;mv assignment4.tgz test-a4]1;mv[1m[7m%[27m[1m[0m                                                                                                                                                                                                            ]2;khawaja@ug02:~/cmput455]1;~/cmput455[0m[27m[24m[J(base) [01;32m➜  [36mcmput455[00m [K[?1h=[?2004hccd assignment          test-a4[1m/[0m[0m [?1l>[?2004l
+]2;cd test-a4]1;cd[1m[7m%[27m[1m[0m                                                                                                                                                                                                            ]2;khawaja@ug02:~/cmput455/test-a4]1;..ut455/test-a4[0m[27m[24m[J(base) [01;32m➜  [36mtest-a4[00m [K[?1h=[?2004httar --exclude='__pycache__' --exclude='.git' -czvf assignment4.tgz assignment4[73Dx[42P[19C                                                     [53D[?1l>[?2004l
+]2;tar -xvf assignment4.tgz]1;tarassignment4/
+assignment4/random_player/
+assignment4/random_player/board_util.py
+assignment4/random_player/board.py
+assignment4/random_player/gtp_connection.py
+assignment4/random_player/nogo_random.py
+assignment4/play.py
+assignment4/.github/
+assignment4/.github/workflows/
+assignment4/.github/workflows/run.yml
+assignment4/.gitignore
+assignment4/readme.txt
+assignment4/go_getters/
+assignment4/go_getters/weights.py
+assignment4/go_getters/simple_board.py
+assignment4/go_getters/MCRave.py
+assignment4/go_getters/gtp_connection.py
+assignment4/go_getters/board_score.py
+assignment4/go_getters/patternbasedfeatures.py
+assignment4/go_getters/feature_moves.py
+assignment4/go_getters/nogo4.py
+assignment4/go_getters/ucb.py
+assignment4/go_getters/simulation_util.py
+assignment4/go_getters/board_util.py
+assignment4/ucb_player/
+assignment4/ucb_player/board_util.py
+assignment4/ucb_player/nogo_ucb.py
+assignment4/ucb_player/board.py
+assignment4/ucb_player/gtp_connection.py
+[1m[7m%[27m[1m[0m                                                                                                                                                                                                            ]2;khawaja@ug02:~/cmput455/test-a4]1;..ut455/test-a4[0m[27m[24m[J(base) [01;32m➜  [36mtest-a4[00m [K[?1h=[?2004hccd assignment4[1m/[0m[0m [?1l>[?2004l
+]2;cd assignment4]1;cd[1m[7m%[27m[1m[0m                                                                                                                                                                                                            ]2;khawaja@ug02:~/cmput455/test-a4/assignment4]1;..4/assignment4[0m[27m[24m[J(base) [01;32m➜  [36massignment4[00m [K[?1h=[?2004hppython3 play.py[?1l>[?2004l
+]2;python3 play.py]1;python3Player1 made move: C7
+Player2 made move: D1
+Player1 made move: G4
+Player2 made move: B1
+Player1 made move: F7
+Player2 made move: B7
+Player1 made move: A1
+Player2 made move: A4
+Player1 made move: E6
+Player2 made move: A3
+Player1 made move: B5
+Player2 made move: E1
+Player1 made move: G6
+Player2 made move: F6
+Player1 made move: G1
+Player2 made move: G2
+Player1 made move: A7
+Player2 made move: F3
+Player1 made move: E7
+Player2 made move: D6
+Player1 made move: E3
+Player2 made move: F5
+Player1 made move: D4
+Player2 made move: G3
+Player1 made move: F4
+Player2 made move: F2
+Player1 made move: E5
+Player2 made move: C2
+Player1 made move: B3
+Player2 made move: A5
+Player1 made move: D2
+Player2 made move: B6
+Player1 made move: B2
+Player2 made move: B4
+Player1 made move: C3
+Player2 made move: D5
+Player1 made move: A2
+Player2 made move: C4
+Player1 made move: E2
+Player2 made move: C6
+Player1 made move: D3
+Player2 made move: C1
+Player1 made move: E4
+Winner: Player1 Timeout: 0
+
+Player1 wins 1 Player2 wins 0 Timeouts 0
+[1m[7m%[27m[1m[0m                                                                                                                                                                                                            ]2;khawaja@ug02:~/cmput455/test-a4/assignment4]1;..4/assignment4[0m[27m[24m[J(base) [01;32m➜  [36massignment4[00m [K[?1h=[?2004hccat g
+[J[0mgame_results.txt  [J[01;34mgo_getters[0m/     [J[A[0m[27m[24m[22Ccat g[Kame_results.txt[1m [0m[0m [?1l>[?2004l
+[J]2;cat game_results.txt]1;catplayer 1: go_getters/nogo4.py
+player 2: random_player/nogo_random.py
+player 1 wins: 1
+player 2 wins: 0
+[1m[7m%[27m[1m[0m                                                                                                                                                                                                            ]2;khawaja@ug02:~/cmput455/test-a4/assignment4]1;..4/assignment4[0m[27m[24m[J(base) [01;32m➜  [36massignment4[00m [K[?1h=[?2004heexit[?1l>[?2004l
+]2;exit]1;exit(base) khawaja@ug02:~/cmput455>ls
+assignment1  assignment2  assignment3  assignment4  presubmission.log  test-a2	test-a3  test-a4  test-assignment1
+(base) khawaja@ug02:~/cmput455>cat presubmission.log 
+(base) khawaja@ug02:~/cmput455>l[Kexit
+exit
+
+Script done on 2022-04-03 18:54:33-06:00 [COMMAND_EXIT_CODE="0"]
